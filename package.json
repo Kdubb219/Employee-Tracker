@@ -1,0 +1,23 @@
+{
+  "name": "challenge-12",
+  "version": "1.0.0",
+  "description": "Employee Tracker",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Kdubb219/Employee-Tracker.git"
+  },
+  "author": "Kyla Wise",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Kdubb219/Employee-Tracker/issues"
+  },
+  "homepage": "https://github.com/Kdubb219/Employee-Tracker#readme",
+  "dependencies": {
+    "inquirer": "^8.2.4",
+    "mysql": "^2.18.1"
+  }
+}
