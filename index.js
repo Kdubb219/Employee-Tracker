@@ -24,46 +24,48 @@ const levelq1 = [
         message: 'what would you like to do?'
 
     }
-]
-const employeeadd = [
-    {
-        name: 'firstname',
-        message: 'employee first name'
-    },
-    {
-        name: 'lastname',
-        message: 'employee last name'
-    },
-    {
-        name: 'role',
-        type: 'list',
-        choices: getRoles(),//[{name:'Manager',id:1 }],
-        message: 'What is your role?'
-    }
-]
+];
 const departmentadd = [
     {
         name: 'department',
         message: 'What is the name of the department?'
     }
-]
+];
 
 
-function getRoles() {
-    return [{ name: 'Manager', value: 1 }];
-    // pool.query('select id, title from employees_db.role order by title', (error,results)=>{
-    //     if (error) {
-    //         console.error('Error executing query:', error);
-    //         return;
-    //       }
-    //     const eroles = results.map(row=>({
-    //         name: row.title,
-    //         value: row.id
-    //     }));
-    //     //console.log(eroles);
-    //     return eroles;
-    // });
-    //connection.release();
+function getRoles(callback) {
+    //return [{ name: 'Manager', value: 1 }];
+    pool.query('select id, title from employees_db.role', (error, results) => {
+        if (error) {
+            console.error('Error executing query:', error);
+            callback(null);
+            return;
+        }
+
+        const roles = results.map(row => ({
+            name: row.title,
+            value: row.id
+        }));
+
+        callback(roles);
+    });
+}
+
+function getDepartments(callback) {
+    pool.query('select id, name from employees_db.department', (error, results) => {
+        if (error) {
+            console.error('Error executing query:', error);
+            callback(null);
+            return;
+        }
+
+        const departments = results.map(row => ({
+            name: row.name,
+            value: row.id
+        }));
+
+        callback(departments);
+    });
 }
 
 function promptAction() {
@@ -104,6 +106,9 @@ function promptAction() {
         if (answer.menu1 == 'Add Department') {
             addDepartment();
         }
+        if(answer.menu1 == 'Add Role') {
+            addRole();
+        }
 
         if (answer.menu1 == 'Quit') {
             process.exit();
@@ -113,22 +118,63 @@ function promptAction() {
 }
 
 function addEmployee() {
-    inquirer.prompt(employeeadd).then(answer => {
-        const employee = {
-            first_name: answer.firstname,
-            last_name: answer.lastname,
-            role_id: answer.role.value
-        };
-        pool.query('insert into employees_db.employee set ?', employee, (error, results) => {
-            if (error) {
-                console.error('Error executing query:', error);
-                return;
+    getRoles((roles) => {
+        const employeeadd =
+            [{ name: 'firstname', message: 'employee first name' },
+
+            { name: 'lastname', message: 'employee last name' },
+            {
+                name: 'role',
+                type: 'list',
+                choices: roles,
+                message: 'What is your role?'
             }
-            console.log('employee inserted in successfully');
-            promptAction();
-        })
-        //connection.release();
+            ];
+
+        inquirer.prompt(employeeadd).then(answer => {
+            const employee = {
+                first_name: answer.firstname,
+                last_name: answer.lastname,
+                role_id: answer.role
+            };
+
+            pool.query('insert into employees_db.employee set ?', employee, (error, results) => {
+                if(error) { console.error('Error executing query:', error); return; }
+                console.log('employee inserted in successfully');
+                promptAction();
+            });
+
+        });
     });
+}
+function addRole() {
+    getDepartments((departments) => {
+
+        const roleadd = [
+            {
+                name: 'role',
+                message: 'What is the name of the role?'
+            },
+            {
+                name: 'department',
+                type: 'list',
+                choices: departments,
+                message: 'What department is this role in?'
+            }
+        ];
+
+        inquirer.prompt(roleadd).then(answer => {
+            pool.query('insert into employees_db.role (title, department_id) values (?,?)', [answer.role, answer.department], (error, results) => {
+                if (error) {
+                    console.error('Error executing query:', error);
+                    return;
+                }
+                console.log('role inserted in successfully');
+                promptAction();
+            });
+        });
+    });
+    
 }
 function addDepartment() {
     inquirer.prompt(departmentadd).then(answer => {
